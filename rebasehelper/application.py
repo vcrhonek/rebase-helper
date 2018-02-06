@@ -61,6 +61,8 @@ class Application(object):
     report_log_file = None
     rebased_patches = {}
     rebased_repo = None
+    old_dir = None
+    new_dir = None
 
     def __init__(self, cli_conf, execution_dir, results_dir, debug_log_file):
         """
@@ -423,6 +425,8 @@ class Application(object):
                     if dest_dir:
                         Application.extract_sources(rest, os.path.join(self.execution_dir, sources_dir, dest_dir))
 
+        self.old_dir = old_dir
+        self.new_dir = new_dir
         self.run_package_checkers(self.results_dir, category="SOURCE")
         return [old_dir, new_dir]
 
@@ -667,7 +671,8 @@ class Application(object):
             try:
                 data = checkers_runner.run_checker(os.path.join(results_dir, 'checkers'),
                                                    checker_name,
-                                                   workspace_dir=self.workspace_dir,
+                                                   old_dir=self.old_dir,
+                                                   new_dir=self.new_dir,
                                                    category=category)
                 if data:
                     results[checker_name] = data

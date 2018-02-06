@@ -26,6 +26,7 @@ import pkg_resources
 
 from rebasehelper.logger import logger, logger_output
 from rebasehelper.results_store import results_store
+from rebasehelper.checkers.licensecheck_tool import LicenseCheckTool
 from rebasehelper.checkers.abipkgdiff_tool import AbiCheckerTool
 from rebasehelper.settings import REBASE_HELPER_RESULTS_DIR
 
@@ -67,6 +68,9 @@ class BaseOutputTool(object):
         if 'abipkgdiff' in checkers:
             if AbiCheckerTool.abi_changes:
                 logger_output.warning('\nABI changes occured. Check abipkgdiff output')
+        if 'licensecheck' in checkers:
+            if LicenseCheckTool.license_changes:
+                logger_output.warning('\nLicense changes occured. Check licensecheck output')
 
         logger_output.heading('\nAvailable logs:')
         logger_output.info('%s:\n%s', 'Debug log', cls.prepend_results_dir_name(os.path.relpath(app.debug_log_file,

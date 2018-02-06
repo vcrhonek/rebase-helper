@@ -1,6 +1,9 @@
 # Change Log
 
 ## [Unreleased]
+### Added
+- Added `licensecheck` dependency for license checking.
+- Added warning messages to inform about ABI and License changes.
 
 ## [0.12.0] - 2017-12-19
 ### Added
