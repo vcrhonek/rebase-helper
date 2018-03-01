@@ -22,6 +22,8 @@
 
 import logging
 
+import rebasehelper.utils
+
 
 class LoggerHelper(object):
     """
@@ -42,17 +44,20 @@ class LoggerHelper(object):
         return basic_logger
 
     @staticmethod
-    def add_stream_handler(logger_object, level=None):
+    def add_stream_handler(logger_object, level=None, formatter_object=None):
         """
         Adds console handler with given severity.
 
         :param logger_object: logger object to add the handler to
         :param level: severity level
+        :param formatter_object: formatter object used to format logged messages
         :return: created handler object
         """
-        console_handler = logging.StreamHandler()
+        console_handler = ColorizingStreamHandler()
         if level:
             console_handler.setLevel(level)
+        if formatter_object:
+            console_handler.setFormatter(formatter_object)
         logger_object.addHandler(console_handler)
         return console_handler
 
@@ -73,6 +78,24 @@ class LoggerHelper(object):
         logger_object.addHandler(file_handler)
 
 
+class ColorizingStreamHandler(logging.StreamHandler):
+    level_map = {
+        logging.DEBUG: {'fg': 'brightblack', 'bg': 'default', 'style': None},
+        logging.INFO: {'fg': 'default', 'bg': 'default', 'style': None},
+        logging.WARNING: {'fg': 'yellow', 'bg': 'default', 'style': None},
+        logging.ERROR: {'fg': 'red', 'bg': 'default', 'style': 'bold'},
+        logging.CRITICAL: {'fg': 'white', 'bg': 'red', 'style': 'bold'},
+    }
+
+    def emit(self, record):
+        try:
+            message = self.format(record)
+            rebasehelper.utils.ConsoleHelper.cprint(message, **self.level_map.get(record.levelno, None))
+            self.flush()
+        except Exception:  # pylint: disable=broad-except
+            self.handleError(record)
+
+
 #  the main rebase-helper logger
 logger = LoggerHelper.get_basic_logger('rebase-helper')
 #  logger for output tool
@@ -80,4 +103,4 @@ logger_output = LoggerHelper.get_basic_logger('output-tool', logging.INFO)
 logger_report = LoggerHelper.get_basic_logger('rebase-helper-report', logging.INFO)
 logger_upstream = LoggerHelper.get_basic_logger('rebase-helper-upstream')
 LoggerHelper.add_stream_handler(logger_output)
-formatter = logging.Formatter("%(asctime)s %(levelname)s\t: %(message)s")
+formatter = logging.Formatter("%(levelname)s: %(message)s")
