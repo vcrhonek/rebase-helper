@@ -101,7 +101,15 @@ class ConsoleHelper(object):
 
     @classmethod
     def should_use_colors(cls, conf):
-        """Determine whether ansi colors should be used for CLI output"""
+        """Determine whether ansi colors should be used for CLI output
+
+        Args:
+            conf: configuration object with arguments from the command line
+
+        Return:
+            True or False, depends on whether colors should be used
+
+        """
         if os.environ.get('PY_COLORS') == '1':
             return True
         if os.environ.get('PY_COLORS') == '0':
@@ -115,27 +123,33 @@ class ConsoleHelper(object):
         return True
 
     @classmethod
-    def cprint(cls, message, color=None):
-        """
-        Print colored output if possible
+    def cprint(cls, message, fg=None, bg=None, style=None):
+        """Print colored output if possible
 
-        :param color: color to be used in the output
-        :param message: string to be printed out
+        Args:
+            message (str): string to be printed out
+            fg (str): color to be used as a foreground in the printed message
+            bg (str): color to be used as a background in the printed message
+            style (str): style to be applied to the printed message
+
         """
-        if cls.use_colors and color is not None and hasattr(colors, color):
-            print(getattr(colors, color)(message))
+        if cls.use_colors:
+            print(colors.color(message, fg=fg, bg=bg, style=style))
         else:
             print(message)
 
     @staticmethod
     def get_message(message, default_yes=True, any_input=False):
-        """
-        Function for command line messages
+        """Function for command line messages
 
-        :param message: prompt string
-        :param default_yes: If the default value is YES
-        :param any_input: if True, return input without checking it first
-        :return: True or False, based on user's input
+        Args:
+            message (str): prompt string
+            default_yes (bool): if the default value is YES
+            any_input (bool): if True, return input without checking it first
+
+        Return:
+            True or False, based on user's input
+
         """
         if default_yes:
             choice = '[Y/n]'
