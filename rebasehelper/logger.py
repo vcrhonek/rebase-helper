@@ -77,11 +77,39 @@ class LoggerHelper(object):
             file_handler.setFormatter(formatter_object)
         logger_object.addHandler(file_handler)
 
+    @staticmethod
+    def add_logging_level(level_name, level_number, method_name=None):
+        if method_name is None:
+            method_name = level_name.lower()
+
+        if hasattr(logging, level_name):
+            raise AttributeError('{} already defined in logging module'.format(level_name))
+        if hasattr(logging, method_name):
+            raise AttributeError('{} already defined in logging module'.format(method_name))
+        if hasattr(logging.getLoggerClass(), method_name):
+            raise AttributeError('{} already defined in logger class'.format(method_name))
+
+        def log_level(self, message, *args, **kwargs):
+            if self.isEnabledFor(level_number):
+                self._log(level_number, message, args, **kwargs)  # pylint: disable=protected-access
+
+        logging.addLevelName(level_number, level_name)
+        setattr(logging, level_name, level_number)
+        setattr(logging.getLoggerClass(), method_name, log_level)
+
+
+LoggerHelper.add_logging_level('SUCCESS', logging.INFO + 5)
+LoggerHelper.add_logging_level('HEADING', logging.INFO + 6)
+LoggerHelper.add_logging_level('IMPORTANT', logging.INFO + 7)
+
 
 class ColorizingStreamHandler(logging.StreamHandler):
     level_map = {
         logging.DEBUG: {'fg': 'brightblack', 'bg': 'default', 'style': None},
         logging.INFO: {'fg': 'default', 'bg': 'default', 'style': None},
+        logging.SUCCESS: {'fg': 'green', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.HEADING: {'fg': 'yellow', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.IMPORTANT: {'fg': 'red', 'bg': 'default', 'style': None},  # pylint: disable=no-member
         logging.WARNING: {'fg': 'yellow', 'bg': 'default', 'style': None},
         logging.ERROR: {'fg': 'red', 'bg': 'default', 'style': 'bold'},
         logging.CRITICAL: {'fg': 'white', 'bg': 'red', 'style': 'bold'},
