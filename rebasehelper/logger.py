@@ -98,6 +98,7 @@ class LoggerHelper(object):
         setattr(logging.getLoggerClass(), method_name, log_level)
 
 
+LoggerHelper.add_logging_level('TRACE', logging.DEBUG + 1)
 LoggerHelper.add_logging_level('SUCCESS', logging.INFO + 5)
 LoggerHelper.add_logging_level('HEADING', logging.INFO + 6)
 LoggerHelper.add_logging_level('IMPORTANT', logging.INFO + 7)
@@ -106,6 +107,7 @@ LoggerHelper.add_logging_level('IMPORTANT', logging.INFO + 7)
 class ColorizingStreamHandler(logging.StreamHandler):
     level_map = {
         logging.DEBUG: {'fg': 'brightblack', 'bg': 'default', 'style': None},
+        logging.TRACE: {'fg': 'red', 'bg': 'default', 'style': None},  # pylint: disable=no-member
         logging.INFO: {'fg': 'default', 'bg': 'default', 'style': None},
         logging.SUCCESS: {'fg': 'green', 'bg': 'default', 'style': None},  # pylint: disable=no-member
         logging.HEADING: {'fg': 'yellow', 'bg': 'default', 'style': None},  # pylint: disable=no-member
