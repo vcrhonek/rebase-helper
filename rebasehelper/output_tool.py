@@ -24,9 +24,8 @@ import os
 import six
 import pkg_resources
 
-from rebasehelper.logger import logger
+from rebasehelper.logger import logger, logger_output
 from rebasehelper.results_store import results_store
-from rebasehelper.utils import ConsoleHelper
 
 
 class BaseOutputTool(object):
@@ -57,19 +56,19 @@ class BaseOutputTool(object):
         cls.app = app
         cls.print_patches_cli()
 
-        ConsoleHelper.cprint('\nAvailable logs:', color='yellow')
-        print('{0}:\n{1}'.format('Debug log', app.debug_log_file))
+        logger_output.heading('\nAvailable logs:')
+        logger_output.info('%s:\n%s', 'Debug log', app.debug_log_file)
         if results_store.get_old_build() is not None:
-            print('{0}:\n{1}'.format('Old build logs and (S)RPMs', os.path.join(app.results_dir, 'old-build')))
+            logger_output.info('%s:\n%s', 'Old build logs and (S)RPMs', os.path.join(app.results_dir, 'old-build'))
         if results_store.get_new_build() is not None:
-            print('{0}:\n{1}'.format('New build logs and (S)RPMs', os.path.join(app.results_dir, 'new-build')))
-        print('')
+            logger_output.info('%s:\n%s', 'New build logs and (S)RPMs', os.path.join(app.results_dir, 'new-build'))
+        logger_output.info('')
 
-        ConsoleHelper.cprint('%s:' % 'Rebased sources', color='yellow')
-        print("%s" % app.rebased_sources_dir)
+        logger_output.heading('%s:', 'Rebased sources')
+        logger_output.info("%s", app.rebased_sources_dir)
 
-        ConsoleHelper.cprint('%s:' % 'Generated patch', color='yellow')
-        print("%s\n" % os.path.join(app.results_dir, 'changes.patch'))
+        logger_output.heading('%s:', 'Generated patch')
+        logger_output.info("%s\n", os.path.join(app.results_dir, 'changes.patch'))
 
         cls.print_report_file_path()
 
@@ -77,19 +76,19 @@ class BaseOutputTool(object):
 
         if not app.conf.patch_only:
             if 'success' in result:
-                ConsoleHelper.cprint('\n%s' % result['success'], color='green')
+                logger_output.success('\n%s' % result['success'])
             # Error is printed out through exception caught in CliHelper.run()
         else:
             if results_store.get_patches()['success']:
-                ConsoleHelper.cprint("\nPatching successful", color='green')
+                logger_output.success("\nPatching successful")
             elif results_store.get_patches()['success']:
-                ConsoleHelper.cprint("\nPatching failed", color='red')
+                logger_output.error("\nPatching failed")
 
     @classmethod
     def print_report_file_path(cls):
         """Print path to the report file"""
-        ConsoleHelper.cprint('%s report:' % cls.NAME, color='yellow')
-        print('%s' % os.path.join(cls.app.results_dir, 'report.' + cls.get_extension()))
+        logger_output.heading('%s report:' % cls.NAME)
+        logger_output.info('%s', os.path.join(cls.app.results_dir, 'report.' + cls.get_extension()))
 
     @classmethod
     def print_patches_cli(cls):
@@ -115,9 +114,12 @@ class BaseOutputTool(object):
             return
 
         if patch_type in patches:
-            print('\n%s patches:' % patch_type)
+            logger_output.info('\n%s patches:', patch_type)
             for patch in patches[patch_type]:
-                ConsoleHelper.cprint(patch, color=color)
+                if color == 'green':
+                    logger_output.success(patch)
+                else:
+                    logger_output.error(patch)
 
     @classmethod
     def run(cls, logs, app):  # pylint: disable=unused-argument
