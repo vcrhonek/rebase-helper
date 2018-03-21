@@ -160,6 +160,7 @@ class CliHelper(object):
         try:
             # be verbose until debug_log_file is created
             handler = LoggerHelper.add_stream_handler(logger, logging.DEBUG, formatter)
+            handler.choose_color_map()
             cli = CLI()
             if hasattr(cli, 'version'):
                 logger.info(VERSION)

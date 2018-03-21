@@ -39,6 +39,10 @@ import copr
 import pyquery
 import hashlib
 import requests
+import termios
+import fcntl
+import tty
+import datetime
 
 import git
 import six
@@ -137,6 +141,83 @@ class ConsoleHelper(object):
             print(colors.color(message, fg=fg, bg=bg, style=style))
         else:
             print(message)
+
+    @staticmethod
+    def color_is_light(rgb):
+        """Function to determine whether a color is dark or bright
+
+        Args:
+            rgb(str): rgb hexcode of the color, e.g 000000 for black
+
+        Return:
+            True or False depending on the color brightness
+
+        """
+        red, green, blue = int(rgb[:2], 16), int(rgb[2:4], 16), int(rgb[4:], 16)
+        brightness = 1 - (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+        return brightness < 0.5
+
+    @staticmethod
+    def dark_or_bright_color_scheme():
+        """Get terminal background color and decide whether to use dark or bright color scheme
+
+        Return:
+            dark or bright depending on the background color
+
+        """
+        background_color = ConsoleHelper.exchange_control_sequence('\x1b]11;?\x07')
+        # use black color by default if the terminal doesn't support the control sequence
+        if background_color is None:
+            return 'dark'
+
+        # parse RGB from the return code, for example from 'rgb:0000/0000/0000' for black
+        background_color = background_color.replace('rgb:', '', 1)
+        rgb = ''.join([x[0:2] for x in background_color.split('/')])
+        if ConsoleHelper.color_is_light(rgb):
+            return 'bright'
+        else:
+            return 'dark'
+
+    @staticmethod
+    def exchange_control_sequence(query, timeout=0.05):
+        """Get response of a control sequence from STDIN
+
+        Args:
+            query (str): control sequence
+            timeout(int, float): time given to the terminal to react
+
+        Return:
+            response of the terminal to the control sequence (str)
+
+        """
+        prefix, suffix = query.split('?', 1)
+        attrs = termios.tcgetattr(sys.stdin)
+        flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+
+        try:
+            # disable STDIN line buffering
+            tty.setcbreak(sys.stdin.fileno(), termios.TCSANOW)
+            # set STDIN to non-blocking mode
+            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+            sys.stdout.write(query)
+            sys.stdout.flush()
+
+            # read the response
+            buf = ''
+            start = datetime.datetime.now()
+            while (datetime.datetime.now() - start).total_seconds() < timeout:
+                try:
+                    buf += sys.stdin.read(1)
+                except IOError:
+                    continue
+                if buf.endswith(suffix):
+                    return buf.replace(prefix, '').replace(suffix, '')
+            return None
+        finally:
+            # set terminal settings to the starting point
+            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, attrs)
+            fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
 
     @staticmethod
     def get_message(message, default_yes=True, any_input=False):

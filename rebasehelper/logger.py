@@ -105,7 +105,7 @@ LoggerHelper.add_logging_level('IMPORTANT', logging.INFO + 7)
 
 
 class ColorizingStreamHandler(logging.StreamHandler):
-    level_map = {
+    dark_level_map = {
         logging.DEBUG: {'fg': 'brightblack', 'bg': 'default', 'style': None},
         logging.TRACE: {'fg': 'red', 'bg': 'default', 'style': None},  # pylint: disable=no-member
         logging.INFO: {'fg': 'default', 'bg': 'default', 'style': None},
@@ -117,10 +117,30 @@ class ColorizingStreamHandler(logging.StreamHandler):
         logging.CRITICAL: {'fg': 'white', 'bg': 'red', 'style': 'bold'},
     }
 
+    bright_level_map = {
+        logging.DEBUG: {'fg': 'brightblack', 'bg': 'default', 'style': None},
+        logging.TRACE: {'fg': 'red', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.INFO: {'fg': 'default', 'bg': 'default', 'style': None},
+        logging.SUCCESS: {'fg': 'green', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.HEADING: {'fg': 'blue', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.IMPORTANT: {'fg': 'red', 'bg': 'default', 'style': None},  # pylint: disable=no-member
+        logging.WARNING: {'fg': 'blue', 'bg': 'default', 'style': None},
+        logging.ERROR: {'fg': 'red', 'bg': 'default', 'style': 'bold'},
+        logging.CRITICAL: {'fg': 'white', 'bg': 'red', 'style': 'bold'},
+    }
+
+    # manually set used color to dark, automatically update when logging the first message
+    map_used = 'dark'
+
+    def choose_color_map(self):
+        self.map_used = rebasehelper.utils.ConsoleHelper.dark_or_bright_color_scheme()
+
     def emit(self, record):
         try:
             message = self.format(record)
-            rebasehelper.utils.ConsoleHelper.cprint(message, **self.level_map.get(record.levelno, None))
+            level_settings = self.dark_level_map.get(record.levelno, None) if self.map_used == 'dark' \
+                else self.bright_level_map.get(record.levelno, None)
+            rebasehelper.utils.ConsoleHelper.cprint(message, **level_settings)
             self.flush()
         except Exception:  # pylint: disable=broad-except
             self.handleError(record)
