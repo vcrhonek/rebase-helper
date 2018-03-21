@@ -30,7 +30,7 @@ from rebasehelper.options import OPTIONS, traverse_options
 from rebasehelper.constants import PROGRAM_DESCRIPTION, NEW_ISSUE_LINK
 from rebasehelper.version import VERSION
 from rebasehelper.application import Application
-from rebasehelper.logger import logger, formatter, LoggerHelper
+from rebasehelper.logger import logger, logger_output, formatter, LoggerHelper
 from rebasehelper.exceptions import RebaseHelperError
 from rebasehelper.utils import ConsoleHelper
 from rebasehelper.config import Config
@@ -159,8 +159,11 @@ class CliHelper(object):
         debug_log_file = None
         try:
             # be verbose until debug_log_file is created
-            handler = LoggerHelper.add_stream_handler(logger, logging.DEBUG, formatter)
-            handler.choose_color_map()
+            main_handler = LoggerHelper.add_stream_handler(logger, logging.DEBUG, formatter)
+            output_tool_handler = LoggerHelper.add_stream_handler(logger_output)
+            for handler in [main_handler, output_tool_handler]:
+                handler.choose_color_map()
+
             cli = CLI()
             if hasattr(cli, 'version'):
                 logger.info(VERSION)
@@ -171,7 +174,11 @@ class CliHelper(object):
             ConsoleHelper.use_colors = ConsoleHelper.should_use_colors(config)
             execution_dir, results_dir, debug_log_file = Application.setup(config)
             if not config.verbose:
-                handler.setLevel(logging.INFO)
+                main_handler.setLevel(logging.INFO)
+            if config.bright_color_scheme:
+                for handler in [main_handler, output_tool_handler]:
+                    handler.map_used = 'bright'
+
             app = Application(config, execution_dir, results_dir, debug_log_file)
             app.run()
         except KeyboardInterrupt:

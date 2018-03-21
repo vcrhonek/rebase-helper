@@ -55,6 +55,12 @@ OPTIONS = [
         "name": ["--results-dir"],
         "help": "directory where rebase-helper output will be stored",
     },
+    {
+        "name": ["--bright-color-scheme"],
+        "default": False,
+        "switch": True,
+        "help": "use bright color scheme instead of dark",
+    },
     # action control
     [
         {
